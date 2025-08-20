@@ -3,6 +3,7 @@ import time
 import logging
 import asyncio
 import email
+import json
 from email import policy
 from email.parser import BytesParser
 from collections import deque
@@ -68,6 +69,18 @@ class Handler:
         user_key = self._route_recipient(rcpt_to)
         token = self.config.pushover_token
         device = self.config.pushover_device
+
+        # Log the translated message before sending to Pushover
+        log_payload = {
+            "event": "translated_message",
+            "rcpt_to": rcpt_to,
+            "title": title,
+            "message": message,
+            "directives": directives,
+            "user_key": user_key,
+        }
+        logging.info(json.dumps(log_payload))
+
         retries = 0
         backoffs = [0.5, 2, 5]
         while retries <= 3:
@@ -90,6 +103,15 @@ class Handler:
                 return '250 Message accepted'
             else:
                 retries += 1
+                # log failure details
+                logging.error(json.dumps({
+                    "event": "push_attempt_failed",
+                    "rcpt_to": rcpt_to,
+                    "subject": title,
+                    "status": status,
+                    "response": str(body_resp),
+                    "retry": retries,
+                }))
                 if retries > 3:
                     self.metrics['pushed_failed'] += 1
                     logging.info(f'{{"event":"push_failed","rcpt_to":"{rcpt_to}","subject":"{title}","status":{status}}}')
@@ -129,7 +151,11 @@ class Handler:
         if not rcpt_to:
             return self.config.default_user_key
         rcpt_map = {k.lower(): v for k, v in self.config.recipient_map.items()}
-        return rcpt_map.get(rcpt_to.lower(), self.config.default_user_key)
+        val = rcpt_map.get(rcpt_to.lower())
+        # If mapping exists but is empty/None, fall back to default
+        if not val:
+            return self.config.default_user_key
+        return val
 
     def _authenticator(self, server, session, envelope, mechanism, auth_data):
         if mechanism != "LOGIN":

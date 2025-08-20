@@ -29,24 +29,38 @@ def load_config():
     if os.path.exists(config_file):
         with open(config_file) as f:
             cfg = yaml.safe_load(f) or {}
-    # Merge env vars
-    def env_or_cfg(key, default=None):
-        return env.get(key.upper(), cfg.get(key, default))
-    recipient_map = cfg.get("pushover", {}).get("recipient_map", {})
+
+    # pushover values: prefer explicit PUSHOVER_* env vars
+    pushover_cfg = cfg.get("pushover", {})
+    pushover_token = env.get("PUSHOVER_TOKEN") or pushover_cfg.get("api_token", "")
+    # support both PUSHOVER_USER_KEY and DEFAULT_USER_KEY env names, then YAML default_user_key
+    default_user_key = env.get("PUSHOVER_USER_KEY") or env.get("DEFAULT_USER_KEY") or pushover_cfg.get("default_user_key", "")
+    recipient_map = pushover_cfg.get("recipient_map", {})
+
+    server_cfg = cfg.get("server", {})
+    # server-level env overrides
+    listen_host = env.get("SMTP_HOST") or env.get("LISTEN_HOST") or server_cfg.get("listen_host", "127.0.0.1")
+    listen_port = int(env.get("SMTP_PORT") or env.get("LISTEN_PORT") or server_cfg.get("listen_port", 2525))
+    allow_nonauth = str(env.get("SMTP_ALLOW_NOAUTH", server_cfg.get("allow_nonauth", True))).lower() == "true"
+    smtp_user = env.get("SMTP_USER") or server_cfg.get("smtp_user")
+    smtp_pass = env.get("SMTP_PASS") or server_cfg.get("smtp_pass")
+    tls_cert_file = env.get("TLS_CERT_FILE") or server_cfg.get("tls_cert_file")
+    tls_key_file = env.get("TLS_KEY_FILE") or server_cfg.get("tls_key_file")
+
     return Config(
-        listen_host=env_or_cfg("listen_host", cfg.get("server", {}).get("listen_host", "127.0.0.1")),
-        listen_port=int(env_or_cfg("listen_port", cfg.get("server", {}).get("listen_port", 2525))),
-        allow_nonauth=str(env_or_cfg("allow_nonauth", cfg.get("server", {}).get("allow_nonauth", True))).lower() == "true",
-        smtp_user=env_or_cfg("smtp_user", cfg.get("server", {}).get("smtp_user")),
-        smtp_pass=env_or_cfg("smtp_pass", cfg.get("server", {}).get("smtp_pass")),
-        tls_cert_file=env_or_cfg("tls_cert_file", cfg.get("server", {}).get("tls_cert_file")),
-        tls_key_file=env_or_cfg("tls_key_file", cfg.get("server", {}).get("tls_key_file")),
-        pushover_token=env_or_cfg("pushover_token", cfg.get("pushover", {}).get("api_token", "")),
-        default_user_key=env_or_cfg("default_user_key", cfg.get("pushover", {}).get("default_user_key", "")),
+        listen_host=listen_host,
+        listen_port=listen_port,
+        allow_nonauth=allow_nonauth,
+        smtp_user=smtp_user,
+        smtp_pass=smtp_pass,
+        tls_cert_file=tls_cert_file,
+        tls_key_file=tls_key_file,
+        pushover_token=pushover_token,
+        default_user_key=default_user_key,
         recipient_map=recipient_map,
-        pushover_device=env_or_cfg("pushover_device", cfg.get("pushover", {}).get("pushover_device")),
-        health_port=int(env_or_cfg("health_port", cfg.get("server", {}).get("health_port", 8080))),
-        rate_limit_per_minute=int(env_or_cfg("rate_limit_per_minute", cfg.get("rate_limit_per_minute", 120))),
-        queue_dir=env_or_cfg("queue_dir", cfg.get("queue_dir")),
-        enable_starttls=str(env_or_cfg("enable_starttls", cfg.get("server", {}).get("enable_starttls", False))).lower() == "true",
+        pushover_device=env.get("PUSHOVER_DEVICE") or pushover_cfg.get("pushover_device"),
+        health_port=int(env.get("HTTP_HEALTH_PORT") or server_cfg.get("health_port", 8080)),
+        rate_limit_per_minute=int(env.get("RATE_LIMIT_PER_MINUTE") or cfg.get("rate_limit_per_minute", 120)),
+        queue_dir=env.get("QUEUE_DIR") or cfg.get("queue_dir"),
+        enable_starttls=str(env.get("ENABLE_STARTTLS", server_cfg.get("enable_starttls", False))).lower() == "true",
     )
