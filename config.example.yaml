@@ -1,0 +1,11 @@
+pushover:
+  api_token: "APP_TOKEN"
+  default_user_key: "USER_OR_GROUP_KEY"
+  recipient_map:
+    alerts@home.local: "Uxxxxxxxxxxxxxxxxxxx"
+    cams@home.local:   "Gxxxxxxxxxxxxxxxxxxx"
+server:
+  listen_host: "0.0.0.0"
+  listen_port: 2525
+  allow_nonauth: true
+  enable_starttls: false
