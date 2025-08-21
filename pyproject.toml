@@ -11,16 +11,25 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiosmtpd",
+    "fastapi",
+    "uvicorn",
+    "sqlmodel",
+    "passlib[bcrypt]",
+    "python-jose",
+    "python-multipart",
     "pyyaml",
-    "aiohttp"
+    "aiohttp",
+    "aiosmtpd",
+    "bcrypt==4.0.1",
+    "cryptography",
+    "email-validator"
 ]
 
 [project.optional-dependencies]
 dev = [
+    "ruff",
     "pytest",
-    "pytest-asyncio",
-    "ruff"
+    "pytest-asyncio"
 ]
 
 [tool.setuptools.packages.find]

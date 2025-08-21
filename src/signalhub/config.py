@@ -22,45 +22,58 @@ class Config:
     enable_starttls: bool = False
 
 
-def load_config():
-    env = os.environ
-    config_file = env.get("CONFIG_FILE", "./config.yaml")
-    cfg = {}
-    if os.path.exists(config_file):
-        with open(config_file) as f:
-            cfg = yaml.safe_load(f) or {}
+import os
+import yaml
+from typing import Dict, Any, Optional
+from .settings_bridge import get_db_settings, get_setting
 
-    # pushover values: prefer explicit PUSHOVER_* env vars
-    pushover_cfg = cfg.get("pushover", {})
-    pushover_token = env.get("PUSHOVER_TOKEN") or pushover_cfg.get("api_token", "")
-    # support both PUSHOVER_USER_KEY and DEFAULT_USER_KEY env names, then YAML default_user_key
-    default_user_key = env.get("PUSHOVER_USER_KEY") or env.get("DEFAULT_USER_KEY") or pushover_cfg.get("default_user_key", "")
-    recipient_map = pushover_cfg.get("recipient_map", {})
+def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
+    """Load configuration from database first, then YAML file, then environment variables"""
+    
+    # Start with database settings
+    config = get_db_settings()
+    
+    # Load YAML config if it exists
+    yaml_config = {}
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                yaml_config = yaml.safe_load(f) or {}
+        except Exception as e:
+            print(f"Warning: Could not load {config_path}: {e}")
+    
+    # Merge configs (database takes precedence over YAML, env vars take precedence over both)
+    merged_config = {**yaml_config, **config}
+    
+    # Override with environment variables if present
+    env_overrides = {
+        'smtp_host': get_setting('SMTP_HOST'),
+        'smtp_port': int(get_setting('SMTP_PORT', '587')),
+        'smtp_username': get_setting('SMTP_USERNAME'),
+        'smtp_password': get_setting('SMTP_PASSWORD'),
+        'smtp_use_tls': get_setting('SMTP_USE_TLS', 'true').lower() == 'true',
+        'smtp_use_ssl': get_setting('SMTP_USE_SSL', 'false').lower() == 'true',
+        'pushover_token': get_setting('PUSHOVER_TOKEN'),
+        'pushover_user': get_setting('PUSHOVER_USER_KEY'),
+        'pushover_device': get_setting('PUSHOVER_DEVICE'),
+        'queue_dir': get_setting('QUEUE_DIR', './queue'),
+        'max_retries': int(get_setting('MAX_RETRIES', '3')),
+        'retry_delay': int(get_setting('RETRY_DELAY', '300')),
+    }
+    
+    # Only override if environment/database value exists
+    for key, value in env_overrides.items():
+        if value is not None:
+            merged_config[key] = value
+    
+    return merged_config
 
-    server_cfg = cfg.get("server", {})
-    # server-level env overrides
-    listen_host = env.get("SMTP_HOST") or env.get("LISTEN_HOST") or server_cfg.get("listen_host", "127.0.0.1")
-    listen_port = int(env.get("SMTP_PORT") or env.get("LISTEN_PORT") or server_cfg.get("listen_port", 2525))
-    allow_nonauth = str(env.get("SMTP_ALLOW_NOAUTH", server_cfg.get("allow_nonauth", True))).lower() == "true"
-    smtp_user = env.get("SMTP_USER") or server_cfg.get("smtp_user")
-    smtp_pass = env.get("SMTP_PASS") or server_cfg.get("smtp_pass")
-    tls_cert_file = env.get("TLS_CERT_FILE") or server_cfg.get("tls_cert_file")
-    tls_key_file = env.get("TLS_KEY_FILE") or server_cfg.get("tls_key_file")
+def get_smtp_config() -> Dict[str, Any]:
+    """Get SMTP configuration for use by the SMTP server"""
+    from .settings_bridge import get_smtp_config as bridge_get_smtp
+    return bridge_get_smtp()
 
-    return Config(
-        listen_host=listen_host,
-        listen_port=listen_port,
-        allow_nonauth=allow_nonauth,
-        smtp_user=smtp_user,
-        smtp_pass=smtp_pass,
-        tls_cert_file=tls_cert_file,
-        tls_key_file=tls_key_file,
-        pushover_token=pushover_token,
-        default_user_key=default_user_key,
-        recipient_map=recipient_map,
-        pushover_device=env.get("PUSHOVER_DEVICE") or pushover_cfg.get("pushover_device"),
-        health_port=int(env.get("HTTP_HEALTH_PORT") or server_cfg.get("health_port", 8080)),
-        rate_limit_per_minute=int(env.get("RATE_LIMIT_PER_MINUTE") or cfg.get("rate_limit_per_minute", 120)),
-        queue_dir=env.get("QUEUE_DIR") or cfg.get("queue_dir"),
-        enable_starttls=str(env.get("ENABLE_STARTTLS", server_cfg.get("enable_starttls", False))).lower() == "true",
-    )
+def get_pushover_config() -> Dict[str, Any]:
+    """Get Pushover configuration for notifications"""
+    from .settings_bridge import get_pushover_config as bridge_get_pushover
+    return bridge_get_pushover()

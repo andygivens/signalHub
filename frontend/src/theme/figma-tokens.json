@@ -1,0 +1,73 @@
+{
+  "global": {
+    "color": {
+      "bg": {
+        "light": { "value": "#F9FAFB", "type": "color" },
+        "dark": { "value": "#0B0F14", "type": "color" }
+      },
+      "panel": {
+        "light": { "value": "#FFFFFF", "type": "color" },
+        "dark": { "value": "#0F1621", "type": "color" }
+      },
+      "text": {
+        "light": { "value": "#111827", "type": "color" },
+        "dark": { "value": "#E5E7EB", "type": "color" }
+      },
+      "text-muted": {
+        "light": { "value": "#6B7280", "type": "color" },
+        "dark": { "value": "#9CA3AF", "type": "color" }
+      },
+      "border": {
+        "light": { "value": "#E5E7EB", "type": "color" },
+        "dark": { "value": "#1F2937", "type": "color" }
+      },
+      "accent": {
+        "light": { "value": "#10B981", "type": "color" },
+        "dark": { "value": "#34D399", "type": "color" }
+      },
+      "accent-strong": {
+        "light": { "value": "#059669", "type": "color" },
+        "dark": { "value": "#10B981", "type": "color" }
+      },
+      "danger": {
+        "light": { "value": "#EF4444", "type": "color" },
+        "dark": { "value": "#F87171", "type": "color" }
+      }
+    },
+    "spacing": {
+      "1": { "value": "4px", "type": "spacing" },
+      "2": { "value": "8px", "type": "spacing" },
+      "3": { "value": "12px", "type": "spacing" },
+      "4": { "value": "16px", "type": "spacing" },
+      "5": { "value": "20px", "type": "spacing" },
+      "6": { "value": "24px", "type": "spacing" },
+      "8": { "value": "32px", "type": "spacing" },
+      "10": { "value": "40px", "type": "spacing" }
+    },
+    "borderRadius": {
+      "value": "0px",
+      "type": "borderRadius"
+    },
+    "fontFamily": {
+      "sans": {
+        "value": "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Inter, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
+        "type": "fontFamilies"
+      },
+      "mono": {
+        "value": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        "type": "fontFamilies"
+      }
+    },
+    "fontSize": {
+      "h1": { "value": "24px", "type": "fontSizes" },
+      "h2": { "value": "20px", "type": "fontSizes" },
+      "body": { "value": "14px", "type": "fontSizes" },
+      "metric": { "value": "28px", "type": "fontSizes" }
+    },
+    "fontWeight": {
+      "normal": { "value": "400", "type": "fontWeights" },
+      "medium": { "value": "600", "type": "fontWeights" },
+      "bold": { "value": "700", "type": "fontWeights" }
+    }
+  }
+}
